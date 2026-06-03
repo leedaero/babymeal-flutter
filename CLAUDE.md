@@ -58,31 +58,63 @@ APK 빌드 전에 반드시 아래 품질 체크를 실행하고 **90점 이상*
 | error | -10점/개 |
 | warning | -3점/개 |
 | info (deprecated 등) | 미채점 |
+| 하드코딩 자격증명 (password/secret/token/apikey) | -20점/개 |
+| HTTP 비보안 URL (localhost 제외) | -10점/개 |
+| `print()` 디버그 노출 | -3점/개 |
 
 시작 점수 100점, 90점 미만이면 빌드 중단 후 문제 수정.
 
-### 품질 체크 명령
+### 품질 + 보안 체크 명령
 
 ```bash
+# ── 1. 정적 분석 ──────────────────────────────
 flutter analyze 2>&1 | tee /tmp/flutter_quality.txt; true
 ERRORS=$(grep -E "^ *error •" /tmp/flutter_quality.txt | wc -l | tr -d ' ')
 WARNINGS=$(grep -E "^ *warning •" /tmp/flutter_quality.txt | wc -l | tr -d ' ')
-SCORE=$((100 - ERRORS * 10 - WARNINGS * 3))
+
+# ── 2. 보안 스캔 ──────────────────────────────
+HARDCODED=$(grep -rn --include="*.dart" -iE \
+  "(password|secret|token|apikey|api_key)\s*=\s*['\"][^'\"]{4,}" \
+  lib/ 2>/dev/null | grep -v "^\s*//" | wc -l | tr -d ' ')
+
+HTTP_URLS=$(grep -rn --include="*.dart" "http://" lib/ 2>/dev/null | \
+  grep -v "//\s*http\|localhost\|127\.0\.0\.1\|0\.0\.0\.0" | wc -l | tr -d ' ')
+
+PRINT_CALLS=$(grep -rn --include="*.dart" "^\s*print(" lib/ 2>/dev/null | \
+  grep -v "debugPrint\|FlutterError\|//\s*print" | wc -l | tr -d ' ')
+
+# ── 3. 점수 계산 ──────────────────────────────
+SEC_DEDUCT=$((HARDCODED * 20 + HTTP_URLS * 10 + PRINT_CALLS * 3))
+SCORE=$((100 - ERRORS * 10 - WARNINGS * 3 - SEC_DEDUCT))
 [ "$SCORE" -lt 0 ] && SCORE=0
-echo "──────────────────────────────"
-echo " 에러:   ${ERRORS}개"
-echo " 경고:   ${WARNINGS}개"
-echo " 품질:   ${SCORE} / 100점"
-echo "──────────────────────────────"
+
+echo "────────────────────────────────"
+echo " [코드 품질]"
+echo "   에러:        ${ERRORS}개  (-$((ERRORS * 10))점)"
+echo "   경고:        ${WARNINGS}개  (-$((WARNINGS * 3))점)"
+echo " [보안]"
+echo "   하드코딩:    ${HARDCODED}개  (-$((HARDCODED * 20))점)"
+echo "   HTTP URL:    ${HTTP_URLS}개  (-$((HTTP_URLS * 10))점)"
+echo "   print():     ${PRINT_CALLS}개  (-$((PRINT_CALLS * 3))점)"
+echo "────────────────────────────────"
+echo " 최종 점수:     ${SCORE} / 100점"
+echo "────────────────────────────────"
+
 if [ "$SCORE" -lt 90 ]; then
-  echo "❌ 품질 기준 미달 (${SCORE}점 < 90점) — 에러/경고 수정 후 재시도"
-  grep "   error •\|   warning •" /tmp/flutter_quality.txt
+  echo "❌ 기준 미달 (${SCORE}점 < 90점) — 아래 항목 수정 후 재시도"
+  grep -E "^ *error •|^ *warning •" /tmp/flutter_quality.txt
+  [ "$HARDCODED" -gt 0 ] && grep -rn --include="*.dart" -iE \
+    "(password|secret|token|apikey|api_key)\s*=\s*['\"][^'\"]{4,}" lib/ | grep -v "^\s*//"
+  [ "$HTTP_URLS" -gt 0 ] && grep -rn --include="*.dart" "http://" lib/ | \
+    grep -v "//\s*http\|localhost\|127\.0\.0\.1"
+  [ "$PRINT_CALLS" -gt 0 ] && grep -rn --include="*.dart" "^\s*print(" lib/ | \
+    grep -v "debugPrint\|FlutterError\|//\s*print"
   exit 1
 fi
-echo "✅ 품질 기준 통과 (${SCORE}점) — 빌드 진행"
+echo "✅ 기준 통과 (${SCORE}점) — 빌드 진행"
 ```
 
-> 에러·경고가 없으면 100점. 경고 3개까지는 91점으로 통과. 4개부터 88점으로 실패.
+> 현재 기준: 경고 3개까지 통과(91점), print() 3개까지 통과(91점). 하드코딩 자격증명 1개라도 있으면 즉시 80점 이하로 실패.
 
 ---
 

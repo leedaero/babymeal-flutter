@@ -60,6 +60,22 @@ firebase appdistribution:distribute \
   --release-notes "변경 내용 요약 (에뮬레이터용)"
 ```
 
+### 4. 에뮬레이터에 직접 설치 (선택)
+
+Firebase 배포 후 에뮬레이터에서 바로 확인하려면 adb로 직접 설치:
+
+```bash
+# 에뮬레이터 연결 확인
+~/Library/Android/sdk/platform-tools/adb devices
+
+# 에뮬레이터 APK 직접 설치
+~/Library/Android/sdk/platform-tools/adb install -r \
+  build/app/outputs/flutter-apk/app-debug.apk
+```
+
+> **에뮬레이터 환경**: Android Studio에서 실행한 Android 에뮬레이터 (Apple Silicon Mac, arm64)  
+> **adb 경로**: `~/Library/Android/sdk/platform-tools/adb`
+
 ### Firebase 정보 (변경 금지)
 
 | 항목 | 값 |

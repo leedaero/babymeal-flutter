@@ -31,6 +31,8 @@ Color _hexToColor(String hex) {
   }
 }
 
+const _ingredientCategories = ['베이스', '육류', '보충단백', '잎채소', '일반채소', '에너지채소', '기타'];
+
 // ── 이모지 데이터 ──────────────────────────────────────────
 const _emojiList = [
   // 채소
@@ -104,6 +106,7 @@ class _EmojiPickerDialog extends StatefulWidget {
 
 class _EmojiPickerDialogState extends State<_EmojiPickerDialog> {
   final _searchCtrl = TextEditingController();
+  final _customCtrl = TextEditingController();
   String _query = '';
 
   List<Map<String, String>> get _results {
@@ -118,6 +121,7 @@ class _EmojiPickerDialogState extends State<_EmojiPickerDialog> {
   @override
   void dispose() {
     _searchCtrl.dispose();
+    _customCtrl.dispose();
     super.dispose();
   }
 
@@ -174,11 +178,12 @@ class _EmojiPickerDialogState extends State<_EmojiPickerDialog> {
                 style: const TextStyle(fontSize: 11, color: Colors.grey)),
             const SizedBox(height: 6),
             ConstrainedBox(
-              constraints: const BoxConstraints(maxHeight: 300),
+              constraints: const BoxConstraints(maxHeight: 240),
               child: results.isEmpty
                   ? const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 24),
-                      child: Center(child: Text('😅 찾는 재료가 없어요', style: TextStyle(color: Colors.grey))),
+                      padding: EdgeInsets.symmetric(vertical: 16),
+                      child: Center(child: Text('😅 목록에 없어요 — 아래에서 직접 입력하세요',
+                          style: TextStyle(color: Colors.grey, fontSize: 12))),
                     )
                   : ListView.separated(
                       shrinkWrap: true,
@@ -215,6 +220,44 @@ class _EmojiPickerDialogState extends State<_EmojiPickerDialog> {
                       },
                     ),
             ),
+            const Divider(height: 20),
+            Row(
+              children: [
+                const Text('직접 입력',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.grey)),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: TextField(
+                    controller: _customCtrl,
+                    style: const TextStyle(fontSize: 22),
+                    maxLength: 2,
+                    decoration: InputDecoration(
+                      hintText: '🍀',
+                      counterText: '',
+                      filled: true,
+                      fillColor: const Color(0xFFF7FAF8),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _lightMint)),
+                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _lightMint)),
+                      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _mint, width: 2)),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _green,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  ),
+                  onPressed: () {
+                    final v = _customCtrl.text.trim();
+                    if (v.isNotEmpty) Navigator.pop(context, v);
+                  },
+                  child: const Text('선택', style: TextStyle(color: Colors.white, fontSize: 13)),
+                ),
+              ],
+            ),
           ],
         ),
       ),
@@ -236,9 +279,9 @@ class _IngredientSheetState extends State<IngredientSheet> {
   final _totalCtrl = TextEditingController();
   final _weightCtrl = TextEditingController();
   final _dateCtrl = TextEditingController();
-  String _unitType = 'weight';
   String _emoji = '';
   Color _selectedColor = _cubeColors[4];
+  String _category = '기타';
 
   bool get _isEdit => widget.existing != null;
 
@@ -252,7 +295,7 @@ class _IngredientSheetState extends State<IngredientSheet> {
       _totalCtrl.text = e.totalCubes.toString();
       _weightCtrl.text = e.weightPerCube?.toString() ?? '';
       _dateCtrl.text = e.createdAt;
-      _unitType = e.unitType;
+      _category = e.category ?? '기타';
       final parsed = _hexToColor(e.color);
       _selectedColor = _cubeColors.contains(parsed) ? parsed : _cubeColors[4];
     } else {
@@ -279,10 +322,8 @@ class _IngredientSheetState extends State<IngredientSheet> {
   String? _validate() {
     if (_nameCtrl.text.trim().isEmpty) return '재료 이름을 입력해주세요';
     if (int.tryParse(_totalCtrl.text) == null) return '총 큐브 수를 숫자로 입력해주세요';
-    if (_unitType == 'weight') {
-      final w = int.tryParse(_weightCtrl.text.trim());
-      if (w == null || w <= 0) return '무게 단위 선택 시 큐브당 무게(g)를 입력해주세요';
-    }
+    final w = int.tryParse(_weightCtrl.text.trim());
+    if (w == null || w <= 0) return '큐브당 무게(g)를 입력해주세요';
     return null;
   }
 
@@ -310,8 +351,9 @@ class _IngredientSheetState extends State<IngredientSheet> {
       'color': _colorToHex(_selectedColor),
       'created_at': _dateCtrl.text.trim(),
       'total_cubes': int.tryParse(_totalCtrl.text) ?? 0,
-      'weight_per_cube': _unitType == 'weight' ? int.tryParse(_weightCtrl.text) : null,
-      'unit_type': _unitType,
+      'weight_per_cube': int.tryParse(_weightCtrl.text),
+      'unit_type': 'weight',
+      'category': _category,
     });
   }
 
@@ -432,6 +474,15 @@ class _IngredientSheetState extends State<IngredientSheet> {
                   const SizedBox(height: 14),
 
                   _buildField(
+                    controller: _weightCtrl,
+                    label: '큐브당 무게 (g)',
+                    hint: '30',
+                    icon: Icons.monitor_weight_outlined,
+                    keyboard: TextInputType.number,
+                  ),
+                  const SizedBox(height: 14),
+
+                  _buildField(
                     controller: _totalCtrl,
                     label: '총 큐브 수',
                     hint: '0',
@@ -440,27 +491,34 @@ class _IngredientSheetState extends State<IngredientSheet> {
                   ),
                   const SizedBox(height: 14),
 
-                  // 단위 유형
-                  const Text('단위 유형',
+                  // 카테고리
+                  const Text('카테고리',
                       style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: _mint)),
                   const SizedBox(height: 8),
-                  Row(children: [
-                    _unitChip('weight', '⚖️ 무게'),
-                    const SizedBox(width: 10),
-                    _unitChip('quantity', '🔢 개수'),
-                  ]),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: _ingredientCategories.map((cat) {
+                      final selected = _category == cat;
+                      return GestureDetector(
+                        onTap: () => setState(() => _category = cat),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                          decoration: BoxDecoration(
+                            color: selected ? _green : _lightMint.withOpacity(0.5),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: selected ? _green : _lightMint),
+                          ),
+                          child: Text(cat,
+                              style: TextStyle(
+                                fontSize: 12, fontWeight: FontWeight.w700,
+                                color: selected ? Colors.white : _green,
+                              )),
+                        ),
+                      );
+                    }).toList(),
+                  ),
                   const SizedBox(height: 14),
-
-                  if (_unitType == 'weight') ...[
-                    _buildField(
-                      controller: _weightCtrl,
-                      label: '큐브당 무게 (g)',
-                      hint: '30',
-                      icon: Icons.monitor_weight_outlined,
-                      keyboard: TextInputType.number,
-                    ),
-                    const SizedBox(height: 14),
-                  ],
 
                   // 큐브 색상
                   const Text('큐브 색상',
@@ -547,30 +605,6 @@ class _IngredientSheetState extends State<IngredientSheet> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _unitChip(String value, String label) {
-    final selected = _unitType == value;
-    return Expanded(
-      child: GestureDetector(
-        onTap: () => setState(() => _unitType = value),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 10),
-          decoration: BoxDecoration(
-            color: selected ? _green : _lightMint.withOpacity(0.5),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: selected ? _green : _lightMint),
-          ),
-          child: Center(
-            child: Text(label,
-                style: TextStyle(
-                  fontSize: 13, fontWeight: FontWeight.w700,
-                  color: selected ? Colors.white : _green,
-                )),
-          ),
-        ),
       ),
     );
   }

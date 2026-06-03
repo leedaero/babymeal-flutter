@@ -10,6 +10,7 @@ class Ingredient {
   final int? weightPerCube;
   final String unitType;
   final String? imageUrl;
+  final String? category;
 
   const Ingredient({
     required this.id,
@@ -22,6 +23,7 @@ class Ingredient {
     this.weightPerCube,
     required this.unitType,
     this.imageUrl,
+    this.category,
   });
 
   factory Ingredient.fromJson(Map<String, dynamic> j) => Ingredient(
@@ -35,6 +37,7 @@ class Ingredient {
         weightPerCube: j['weight_per_cube'],
         unitType: j['unit_type'] ?? 'weight',
         imageUrl: j['image_url'],
+        category: j['category'],
       );
 
   bool get isLowStock => currentCubes <= 3;

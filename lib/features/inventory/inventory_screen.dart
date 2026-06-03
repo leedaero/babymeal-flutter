@@ -13,7 +13,7 @@ const _green = Color(0xFF2d6a4f);
 const _mint = Color(0xFF52b788);
 const _lightMint = Color(0xFFd8f3dc);
 
-const _categories = ['전체', '채소', '과일', '단백질', '곡물', '유제품', '기타'];
+const _categories = ['전체', '베이스', '육류', '보충단백', '잎채소', '일반채소', '에너지채소', '기타'];
 
 class InventoryScreen extends ConsumerStatefulWidget {
   const InventoryScreen({super.key});
@@ -78,7 +78,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
             final matchSearch = _search.isEmpty ||
                 item.name.contains(_search) ||
                 item.emoji.contains(_search);
-            final matchCat = _category == '전체' || item.unitType == _category;
+            final matchCat = _category == '전체' || item.category == _category;
             return matchSearch && matchCat;
           }).toList();
 

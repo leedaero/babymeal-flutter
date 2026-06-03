@@ -2,8 +2,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
-import '../../core/push/fcm_service.dart';
 import '../../core/push/notification_provider.dart';
 import '../../core/push/notification_model.dart';
 import '../shell/main_shell.dart';

@@ -1,4 +1,10 @@
-# babymeal 프로젝트 가이드
+# babymeal Flutter 앱 가이드
+
+## 레포 정보
+
+- GitHub: `leedaero/babymeal-flutter`
+- 로컬 경로: `/Users/idaelo/project/babymeal-flutter`
+- 백엔드 레포: `leedaero/babymeal` (`/Users/idaelo/project/babyMeal`)
 
 ## 작업 완료 후 필수 사항
 
@@ -12,7 +18,7 @@
 
 ### 1. pubspec.yaml 버전 올리기
 
-`flutter/babymeal_app/pubspec.yaml` 의 version 줄을 수정:
+`/Users/idaelo/project/babymeal-flutter/pubspec.yaml` 의 version 줄을 수정:
 ```
 version: X.X.X+N   (뒤 빌드번호 N은 항상 이전보다 +1)
 ```
@@ -20,10 +26,10 @@ version: X.X.X+N   (뒤 빌드번호 N은 항상 이전보다 +1)
 ### 2. APK 빌드 (릴리즈 + 에뮬레이터)
 
 ```bash
-cd /Users/idaelo/project/babyMeal/flutter/babymeal_app
+cd /Users/idaelo/project/babymeal-flutter
 # 릴리즈 빌드 (실기기용)
 flutter build apk --release
-# 에뮬레이터 빌드 (x86_64)
+# 에뮬레이터 빌드 (arm64, Apple Silicon Mac 기준)
 flutter build apk --debug --target-platform android-arm64
 ```
 
@@ -57,7 +63,7 @@ firebase appdistribution:distribute \
 ### 전체 자동 배포 명령 (한 번에)
 
 ```bash
-cd /Users/idaelo/project/babyMeal/flutter/babymeal_app && \
+cd /Users/idaelo/project/babymeal-flutter && \
 flutter build apk --release && \
 flutter build apk --debug --target-platform android-arm64 && \
 firebase appdistribution:distribute \

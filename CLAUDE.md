@@ -8,9 +8,35 @@
 
 ## API 백엔드 수정이 필요한 경우
 
-Flutter 앱 작업 중 API 추가·수정·버그 수정 등 백엔드 변경이 필요하다면, **이 레포에서 직접 수정하지 말고** 백엔드 프로젝트로 이동해서 수정할 것:
+Flutter 앱 작업 중 API 추가·수정·버그 수정 등 백엔드 변경이 필요하면, **Cmux로 백엔드 탭에 직접 작업 지시를 전송**한다.
 
-- 백엔드 프로젝트 경로: `/Users/idaelo/project/babyMeal/`
+### 백엔드 탭 찾기 → 명령 전송 절차
+
+```bash
+# 1. 현재 열려 있는 탭 목록 확인
+cmux tree --all
+
+# 2-A. "babyMeal backend" 탭이 있으면 해당 surface ID로 전송
+cmux send --surface <surface_id> "<작업 내용>"
+cmux send-key --surface <surface_id> "Enter"
+
+# 2-B. 탭이 없으면 프로젝트 경로 확인 후 새 탭 열기
+ls /Users/idaelo/project/babyMeal   # 경로 존재 확인
+cmux /Users/idaelo/project/babyMeal  # 해당 경로로 새 탭 열기
+# 열린 뒤 다시 cmux tree --all 로 surface ID 확인 후 전송
+```
+
+### 백엔드 작업 지시 메시지 형식
+
+전송할 메시지에는 아래 내용을 포함한다:
+- 어떤 기능을 위한 변경인지 (Flutter 기능명)
+- 필요한 API 변경 목록 (엔드포인트, 필드명, 타입)
+- Flutter 모델 기준 필드명 (`snake_case`)
+- **작업 완료 후 커밋+푸시 요청**
+
+### 백엔드 정보
+
+- 프로젝트 경로: `/Users/idaelo/project/babyMeal/`
 - GitHub: `leedaero/babymeal`
 
 백엔드 수정이 완료된 후 Flutter 앱 작업을 이어서 진행한다.

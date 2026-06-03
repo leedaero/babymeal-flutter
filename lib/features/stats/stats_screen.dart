@@ -6,6 +6,8 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import '../inventory/ingredient_model.dart';
 import '../inventory/ingredient_provider.dart';
+import '../schedule/meal_model.dart';
+import '../schedule/meal_provider.dart';
 
 const _green = Color(0xFF2d6a4f);
 const _mint = Color(0xFF52b788);
@@ -14,6 +16,22 @@ const _red = Color(0xFFe05c5c);
 const _redLight = Color(0xFFffe5e7);
 const _barBlue = Color(0xFF4BA3E3);
 const _lowThreshold = 3;
+
+int _monthIngPriority(String name) {
+  if (name.contains('베이스')) return 0;
+  if (name.startsWith('소')) return 1;
+  if (name.startsWith('닭')) return 2;
+  return 3;
+}
+
+class _IngStat {
+  final String name;
+  final String emoji;
+  int cubes;
+  final int? weightPerCube;
+  _IngStat({required this.name, required this.emoji, required this.cubes, this.weightPerCube});
+  int get totalGrams => cubes * (weightPerCube ?? 0);
+}
 
 Color _hexToColor(String hex) {
   try {
@@ -30,6 +48,7 @@ class StatsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(ingredientsProvider);
+    final mealsAsync = ref.watch(mealsProvider);
     return Scaffold(
       backgroundColor: const Color(0xFFF7FAF8),
       appBar: AppBar(
@@ -243,6 +262,12 @@ class StatsScreen extends ConsumerWidget {
                   ),
                 ),
               ],
+              // ── 월별 섭취 통계 ──────────────────────────────────────
+              const SizedBox(height: 16),
+              _MonthlyStatsSection(
+                items: items,
+                meals: mealsAsync.valueOrNull ?? [],
+              ),
             ],
           );
         },
@@ -442,4 +467,193 @@ class _ExportButton extends StatelessWidget {
           ),
         ),
       );
+}
+
+// ── 월별 섭취 통계 ─────────────────────────────────────────────────────────────
+class _MonthlyStatsSection extends StatelessWidget {
+  final List<Ingredient> items;
+  final List<Meal> meals;
+  const _MonthlyStatsSection({required this.items, required this.meals});
+
+  Map<String, List<_IngStat>> _buildData() {
+    final confirmed = meals
+        .where((m) => m.status == 'confirmed' || m.status == 'auto-consumed')
+        .toList();
+
+    final Map<String, Map<int, _IngStat>> byMonth = {};
+    for (final meal in confirmed) {
+      if (meal.date.length < 7) continue;
+      final month = meal.date.substring(0, 7);
+      byMonth.putIfAbsent(month, () => {});
+      for (final ing in meal.ingredients) {
+        final ingMatches = items.where((i) => i.id == ing.ingredientId);
+        final ingData = ingMatches.isEmpty ? null : ingMatches.first;
+        final existing = byMonth[month]![ing.ingredientId];
+        if (existing == null) {
+          byMonth[month]![ing.ingredientId] = _IngStat(
+            name: ing.name,
+            emoji: ing.emoji,
+            cubes: ing.grams,
+            weightPerCube: ingData?.weightPerCube,
+          );
+        } else {
+          existing.cubes += ing.grams;
+        }
+      }
+    }
+
+    return byMonth.map((k, v) {
+      final list = v.values.toList()
+        ..sort((a, b) {
+          final d = _monthIngPriority(a.name) - _monthIngPriority(b.name);
+          return d != 0 ? d : a.name.compareTo(b.name);
+        });
+      return MapEntry(k, list);
+    });
+  }
+
+  String _monthLabel(String ym) {
+    final parts = ym.split('-');
+    if (parts.length < 2) return ym;
+    return '${parts[0]}년 ${int.parse(parts[1])}월';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final data = _buildData();
+    if (data.isEmpty) return const SizedBox.shrink();
+
+    final months = data.keys.toList()..sort((a, b) => b.compareTo(a));
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)
+        ],
+      ),
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Padding(
+            padding: EdgeInsets.fromLTRB(20, 18, 20, 10),
+            child: Text('📅 월별 섭취 통계',
+                style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                    color: _green)),
+          ),
+          ...months.asMap().entries.map((entry) => _MonthTile(
+                monthLabel: _monthLabel(months[entry.key]),
+                stats: data[months[entry.key]]!,
+                initiallyExpanded: entry.key == 0,
+              )),
+        ],
+      ),
+    );
+  }
+}
+
+class _MonthTile extends StatelessWidget {
+  final String monthLabel;
+  final List<_IngStat> stats;
+  final bool initiallyExpanded;
+  const _MonthTile(
+      {required this.monthLabel,
+      required this.stats,
+      this.initiallyExpanded = false});
+
+  @override
+  Widget build(BuildContext context) {
+    final totalCubes = stats.fold(0, (s, i) => s + i.cubes);
+    final totalGrams = stats.fold(0, (s, i) => s + i.totalGrams);
+
+    return ExpansionTile(
+      initiallyExpanded: initiallyExpanded,
+      tilePadding: const EdgeInsets.symmetric(horizontal: 20),
+      childrenPadding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+      title: Row(
+        children: [
+          Text(monthLabel,
+              style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: _green)),
+          const SizedBox(width: 8),
+          if (totalGrams > 0)
+            Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                  color: _lightMint,
+                  borderRadius: BorderRadius.circular(8)),
+              child: Text('총 ${totalGrams}g',
+                  style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: _green)),
+            )
+          else
+            Text('$totalCubes큐브',
+                style:
+                    const TextStyle(fontSize: 11, color: Colors.grey)),
+        ],
+      ),
+      children: [
+        ...stats.map((s) => Padding(
+              padding: const EdgeInsets.symmetric(vertical: 5),
+              child: Row(
+                children: [
+                  Text('${s.emoji} ${s.name}',
+                      style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: _green)),
+                  const Spacer(),
+                  if (s.weightPerCube != null)
+                    Text('${s.weightPerCube}g × ${s.cubes}개 = ',
+                        style: const TextStyle(
+                            fontSize: 12, color: Colors.grey)),
+                  Text(
+                    s.weightPerCube != null
+                        ? '${s.totalGrams}g'
+                        : '${s.cubes}큐브',
+                    style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: _green),
+                  ),
+                ],
+              ),
+            )),
+        Divider(height: 16, color: Colors.grey.shade100),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            Text('합계  ',
+                style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey.shade500,
+                    fontWeight: FontWeight.w600)),
+            Text('$totalCubes개',
+                style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: _green)),
+            if (totalGrams > 0) ...[
+              const Text('  /  ',
+                  style: TextStyle(fontSize: 12, color: Colors.grey)),
+              Text('${totalGrams}g',
+                  style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                      color: _green)),
+            ],
+          ],
+        ),
+      ],
+    );
+  }
 }

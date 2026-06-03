@@ -281,8 +281,12 @@ class _IngredientCard extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 3),
-                  Text(item.unitType.isNotEmpty ? item.unitType : '보관 방법 미설정',
-                      style: const TextStyle(fontSize: 12, color: _mint)),
+                  Text(
+                    item.weightPerCube != null
+                        ? '${item.weightPerCube}g / 큐브'
+                        : (item.unitType.isNotEmpty ? item.unitType : '-'),
+                    style: const TextStyle(fontSize: 12, color: _mint),
+                  ),
                 ],
               ),
             ),

@@ -9,6 +9,20 @@ const _green = Color(0xFF2d6a4f);
 const _mint = Color(0xFF52b788);
 const _lightMint = Color(0xFFd8f3dc);
 
+Color _statusColor(String? status) => switch (status) {
+      '통과' => _green,
+      '보류' => const Color(0xFFF9A825),
+      '다시' => const Color(0xFFe63946),
+      _ => _mint,
+    };
+
+Color _statusBg(String? status) => switch (status) {
+      '통과' => const Color(0xFFd8f3dc),
+      '보류' => const Color(0xFFFFF3E0),
+      '다시' => const Color(0xFFffe5e7),
+      _ => const Color(0xFFE3F2FD),
+    };
+
 class AllergyScreen extends ConsumerStatefulWidget {
   const AllergyScreen({super.key});
   @override
@@ -91,6 +105,23 @@ class _AllergyScreenState extends ConsumerState<AllergyScreen>
                       setState(() { _selected = sel; _focused = foc; }),
                   eventLoader: (d) =>
                       byDate[d.toIso8601String().substring(0, 10)] ?? [],
+                  calendarBuilders: CalendarBuilders(
+                    markerBuilder: (context, day, events) {
+                      if (events.isEmpty) return null;
+                      final tsts = events.cast<AllergyTest>();
+                      return Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: tsts.take(5).map((t) => Container(
+                          width: 6, height: 6,
+                          margin: const EdgeInsets.symmetric(horizontal: 1),
+                          decoration: BoxDecoration(
+                            color: _statusColor(t.status),
+                            shape: BoxShape.circle,
+                          ),
+                        )).toList(),
+                      );
+                    },
+                  ),
                   calendarFormat: CalendarFormat.month,
                   headerStyle: const HeaderStyle(
                     formatButtonVisible: false,
@@ -120,8 +151,8 @@ class _AllergyScreenState extends ConsumerState<AllergyScreen>
                     selectedTextStyle: const TextStyle(
                         color: Colors.white, fontWeight: FontWeight.w800),
                     markerDecoration: const BoxDecoration(
-                        color: _mint, shape: BoxShape.circle),
-                    markerSize: 5,
+                        color: Colors.transparent),
+                    markerSize: 0,
                     weekendTextStyle:
                         const TextStyle(color: Color(0xFFe63946)),
                     defaultTextStyle: const TextStyle(color: Color(0xFF333333)),
@@ -249,6 +280,7 @@ class _AllergySheetState extends State<_AllergySheet> {
   late final TextEditingController _emojiCtrl;
   late final TextEditingController _nameCtrl;
   late final TextEditingController _memoCtrl;
+  String? _status;
 
   @override
   void initState() {
@@ -259,6 +291,7 @@ class _AllergySheetState extends State<_AllergySheet> {
         TextEditingController(text: widget.existing?.ingredientName ?? '');
     _memoCtrl =
         TextEditingController(text: widget.existing?.memo ?? '');
+    _status = widget.existing?.status;
   }
 
   @override
@@ -292,6 +325,7 @@ class _AllergySheetState extends State<_AllergySheet> {
       'emoji': _emojiCtrl.text.trim().isEmpty ? '🧪' : _emojiCtrl.text.trim(),
       'ingredient_name': _nameCtrl.text.trim(),
       'memo': _memoCtrl.text.trim(),
+      'status': _status,
     });
   }
 
@@ -415,6 +449,55 @@ class _AllergySheetState extends State<_AllergySheet> {
                   hint: '예) 두드러기, 이상 없음 등',
                   maxLines: 3,
                 ),
+                const SizedBox(height: 14),
+                // 테스트 결과 선택
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text('테스트 결과',
+                      style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: _mint)),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: ['통과', '보류', '다시'].map((s) {
+                    final selected = _status == s;
+                    final color = _statusColor(s);
+                    final bg = _statusBg(s);
+                    return Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 3),
+                        child: GestureDetector(
+                          onTap: () => setState(
+                              () => _status = selected ? null : s),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 120),
+                            padding:
+                                const EdgeInsets.symmetric(vertical: 10),
+                            decoration: BoxDecoration(
+                              color: selected ? color : bg,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                  color: selected
+                                      ? color
+                                      : color.withOpacity(0.3)),
+                            ),
+                            child: Center(
+                              child: Text(s,
+                                  style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
+                                      color: selected
+                                          ? Colors.white
+                                          : color)),
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
                 const SizedBox(height: 20),
                 SizedBox(
                   width: double.infinity,
@@ -516,11 +599,33 @@ class _AllergyCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(test.ingredientName,
-                      style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                          color: _green)),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(test.ingredientName,
+                            style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                                color: _green)),
+                      ),
+                      if (test.status != null) ...[
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: _statusBg(test.status),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(test.status!,
+                              style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: _statusColor(test.status))),
+                        ),
+                      ],
+                    ],
+                  ),
                   if (hasMemo) ...[
                     const SizedBox(height: 3),
                     Text(test.memo,

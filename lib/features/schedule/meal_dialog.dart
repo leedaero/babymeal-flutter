@@ -60,7 +60,9 @@ class _MealDialogState extends ConsumerState<MealDialog> {
     if (e != null) {
       _mealTime = e.mealTime;
       for (final ing in e.ingredients) {
-        _selected[ing.ingredientId] = ing.grams;
+        final wpc = ing.weightPerCube;
+        _selected[ing.ingredientId] =
+            (wpc != null && wpc > 0) ? (ing.grams / wpc).round() : ing.grams;
       }
     }
   }
@@ -310,7 +312,7 @@ class _MealDialogState extends ConsumerState<MealDialog> {
                               color: _green,
                               borderRadius: BorderRadius.circular(8),
                             ),
-                            child: Text('×$cnt',
+                            child: Text('×${cnt}개',
                                 style: const TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w800,
@@ -448,7 +450,7 @@ class _MealDialogState extends ConsumerState<MealDialog> {
                               color: _green,
                               borderRadius: BorderRadius.circular(8),
                             ),
-                            child: Text('×$cnt',
+                            child: Text('×${cnt}개',
                                 style: const TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w800,

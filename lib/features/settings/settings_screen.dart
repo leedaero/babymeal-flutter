@@ -109,21 +109,24 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   Widget _buildGroup(List<_SettingItem> items) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8)],
       ),
-      child: Column(
-        children: items.asMap().entries.map((entry) {
-          final i = entry.key;
-          final item = entry.value;
-          return Column(
-            children: [
-              if (i > 0) const Divider(height: 1, indent: 56),
-              _buildSettingTile(item),
-            ],
-          );
-        }).toList(),
+      child: Material(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        child: Column(
+          children: items.asMap().entries.map((entry) {
+            final i = entry.key;
+            final item = entry.value;
+            return Column(
+              children: [
+                if (i > 0) const Divider(height: 1, indent: 56),
+                _buildSettingTile(item),
+              ],
+            );
+          }).toList(),
+        ),
       ),
     );
   }
@@ -329,32 +332,35 @@ class _UserManagementScreenState extends ConsumerState<_UserManagementScreen> {
                   return Container(
                     margin: const EdgeInsets.only(bottom: 8),
                     decoration: BoxDecoration(
-                      color: Colors.white,
                       borderRadius: BorderRadius.circular(14),
                       boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 6)],
                     ),
-                    child: ListTile(
-                      leading: Container(
-                        width: 36, height: 36,
-                        decoration: BoxDecoration(color: _lightMint, borderRadius: BorderRadius.circular(10)),
-                        child: const Icon(Icons.person_outline, color: _green, size: 18),
-                      ),
-                      title: Text(u['username'] ?? '', style: const TextStyle(fontWeight: FontWeight.w700)),
-                      subtitle: Text(u['is_active'] == 1 ? '활성' : '비활성',
-                          style: TextStyle(color: u['is_active'] == 1 ? _mint : Colors.grey)),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            icon: Icon(u['is_active'] == 1 ? Icons.block : Icons.check_circle,
-                                color: u['is_active'] == 1 ? Colors.orange : _mint),
-                            onPressed: () async { await SettingsActions.toggleUser(u['id']); _load(); },
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.delete_outline, color: Color(0xFFe63946)),
-                            onPressed: () async { await SettingsActions.deleteUser(u['id']); _load(); },
-                          ),
-                        ],
+                    child: Material(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(14),
+                      child: ListTile(
+                        leading: Container(
+                          width: 36, height: 36,
+                          decoration: BoxDecoration(color: _lightMint, borderRadius: BorderRadius.circular(10)),
+                          child: const Icon(Icons.person_outline, color: _green, size: 18),
+                        ),
+                        title: Text(u['username'] ?? '', style: const TextStyle(fontWeight: FontWeight.w700)),
+                        subtitle: Text(u['is_active'] == 1 ? '활성' : '비활성',
+                            style: TextStyle(color: u['is_active'] == 1 ? _mint : Colors.grey)),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: Icon(u['is_active'] == 1 ? Icons.block : Icons.check_circle,
+                                  color: u['is_active'] == 1 ? Colors.orange : _mint),
+                              onPressed: () async { await SettingsActions.toggleUser(u['id']); _load(); },
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete_outline, color: Color(0xFFe63946)),
+                              onPressed: () async { await SettingsActions.deleteUser(u['id']); _load(); },
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   );

@@ -150,7 +150,7 @@ class _MealDialogState extends ConsumerState<MealDialog> {
                       color: Colors.white.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Text('총 $_totalCount 큐브',
+                    child: Text('총 $_totalCount ${_isEdit ? 'g' : '큐브'}',
                         style: const TextStyle(
                           fontSize: 11, fontWeight: FontWeight.w700,
                           color: Colors.white,
@@ -243,7 +243,7 @@ class _MealDialogState extends ConsumerState<MealDialog> {
                 color: _lightMint,
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Text('${_selected.length}종  $_totalCount큐브',
+              child: Text('${_selected.length}종  $_totalCount${_isEdit ? 'g' : '큐브'}',
                   style: const TextStyle(
                     fontSize: 10, fontWeight: FontWeight.w800,
                     color: _green,

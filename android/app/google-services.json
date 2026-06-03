@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1045238419165",
+    "project_id": "babymeal-4f6f7",
+    "storage_bucket": "babymeal-4f6f7.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1045238419165:android:1d1bf34ccc50a275009534",
+        "android_client_info": {
+          "package_name": "com.babymeal.babymeal_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB2M33DIpQp0ALLhMEBD7xGG5G5qfMoMUE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -64,6 +64,7 @@ class StatsScreen extends ConsumerWidget {
           }
           final totalCubes = items.fold(0, (s, i) => s + i.currentCubes);
           final lowCount = items.where((i) => i.isLowStock).length;
+          final expiredItems = items.where((i) => i.isExpired).toList();
           final sorted = [...items]
             ..sort((a, b) => b.currentCubes.compareTo(a.currentCubes));
           final double maxCubes =
@@ -184,6 +185,64 @@ class StatsScreen extends ConsumerWidget {
                   ),
                 ),
               ],
+              // ── 기간 지남 섹션 ──────────────────────────────────────────
+              if (expiredItems.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(18),
+                    boxShadow: [
+                      BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 10)
+                    ],
+                    border: Border.all(
+                        color: const Color(0xFFFF9800).withOpacity(0.3)),
+                  ),
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFF3E0),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Text('⏰ 기간 지남 (90일 초과)',
+                            style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFFE65100))),
+                      ),
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: expiredItems
+                            .map((i) => Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFFFF3E0),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Text(
+                                    '${i.emoji} ${i.name}  ${i.currentCubes}개',
+                                    style: const TextStyle(
+                                        fontSize: 13,
+                                        color: Color(0xFFE65100),
+                                        fontWeight: FontWeight.w600),
+                                  ),
+                                ))
+                            .toList(),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ],
           );
         },
@@ -242,8 +301,11 @@ class _HBar extends StatelessWidget {
     final label = ing.weightPerCube != null && ing.weightPerCube! > 0
         ? '${ing.emoji} ${ing.name}  ${ing.weightPerCube}g'
         : '${ing.emoji} ${ing.name}';
-    final barColor = isLow ? _red : _hexToColor(ing.color);
-    final barBg = isLow ? _redLight : barColor.withOpacity(0.15);
+    final rawColor = _hexToColor(ing.color);
+    final barColor = isLow
+        ? _red
+        : (rawColor.computeLuminance() > 0.85 ? _barBlue : rawColor);
+    final barBg = isLow ? _redLight : const Color(0xFFF0F4F2);
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),

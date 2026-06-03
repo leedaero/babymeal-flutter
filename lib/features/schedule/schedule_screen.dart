@@ -99,6 +99,49 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen>
                       setState(() { _selected = sel; _focused = foc; }),
                   eventLoader: (d) =>
                       byDate[d.toIso8601String().substring(0, 10)] ?? [],
+                  calendarBuilders: CalendarBuilders(
+                    markerBuilder: (context, day, events) {
+                      if (events.isEmpty) return null;
+                      final meals = events.cast<Meal>();
+                      return Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: meals.take(5).map((m) {
+                              final color = switch (m.status) {
+                                'confirmed' || 'auto-consumed' => _green,
+                                'skipped' => const Color(0xFFe63946),
+                                _ => const Color(0xFFF9A825),
+                              };
+                              return Container(
+                                width: 5, height: 5,
+                                margin: const EdgeInsets.symmetric(horizontal: 1),
+                                decoration: BoxDecoration(
+                                    color: color, shape: BoxShape.circle),
+                              );
+                            }).toList(),
+                          ),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: meals.take(5).map((m) {
+                              final emoji = switch (m.mealTime) {
+                                'morning' => '🌅',
+                                'morning_snack' => '🍪',
+                                'lunch' => '☀️',
+                                'snack' => '🍪',
+                                'dinner' => '🌙',
+                                _ => '🍽',
+                              };
+                              return Text(emoji,
+                                  style: const TextStyle(
+                                      fontSize: 6, height: 1.1));
+                            }).toList(),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
                   calendarFormat: CalendarFormat.month,
                   headerStyle: const HeaderStyle(
                     formatButtonVisible: false,
@@ -125,8 +168,8 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen>
                       borderRadius: BorderRadius.circular(10),
                     ),
                     selectedTextStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800),
-                    markerDecoration: const BoxDecoration(color: _mint, shape: BoxShape.circle),
-                    markerSize: 5,
+                    markerDecoration: const BoxDecoration(color: Colors.transparent),
+                    markerSize: 0,
                     weekendTextStyle: const TextStyle(color: Color(0xFFe63946)),
                     defaultTextStyle: const TextStyle(color: Color(0xFF333333)),
                   ),
@@ -209,6 +252,13 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen>
   }
 }
 
+int _ingPriority(String name) {
+  if (name.contains('베이스')) return 0;
+  if (name.startsWith('소')) return 1;
+  if (name.startsWith('닭')) return 2;
+  return 3;
+}
+
 class _MealCard extends StatelessWidget {
   final Meal meal;
   final VoidCallback onRefresh;
@@ -261,19 +311,31 @@ class _MealCard extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          meal.ingredients.isNotEmpty
-                              ? meal.ingredients.map((i) => i.name).join(', ')
-                              : '재료 없음',
-                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: _green),
-                        ),
-                        if (meal.ingredients.isNotEmpty) ...[
-                          const SizedBox(height: 2),
-                          Text(
-                            meal.ingredients.map((i) => i.emoji).join(' '),
-                            style: const TextStyle(fontSize: 12),
-                          ),
-                        ],
+                        Builder(builder: (_) {
+                          final sorted = [...meal.ingredients]
+                            ..sort((a, b) {
+                              final d = _ingPriority(a.name) - _ingPriority(b.name);
+                              return d != 0 ? d : a.name.compareTo(b.name);
+                            });
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                sorted.isNotEmpty
+                                    ? sorted.map((i) => i.name).join(', ')
+                                    : '재료 없음',
+                                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: _green),
+                              ),
+                              if (sorted.isNotEmpty) ...[
+                                const SizedBox(height: 2),
+                                Text(
+                                  sorted.map((i) => i.emoji).join(' '),
+                                  style: const TextStyle(fontSize: 12),
+                                ),
+                              ],
+                            ],
+                          );
+                        }),
                       ],
                     ),
                   ),

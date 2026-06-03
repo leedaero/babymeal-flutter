@@ -18,6 +18,7 @@ class BabyMealApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) => MaterialApp(
         title: '치밀한 이유식',
+        debugShowCheckedModeBanner: false,
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(
             seedColor: const Color(0xFF2d6a4f),

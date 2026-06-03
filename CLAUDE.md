@@ -45,7 +45,46 @@ cmux /Users/idaelo/project/babyMeal  # 해당 경로로 새 탭 열기
 
 - 작업이 끝나면 항상 커밋 → 푸시까지 완료할 것
 - **PR 생성은 모바일 환경에서 작업할 때만** 수행할 것 (PC에서는 PR 생성 불필요)
-- **Flutter 앱 변경 시 반드시 릴리즈 APK 빌드 + 에뮬레이터 APK 빌드 → Firebase App Distribution 배포까지 완료할 것**
+- **Flutter 앱 변경 시: 코드 품질 체크(90점↑) → 릴리즈 APK 빌드 + 에뮬레이터 APK 빌드 → Firebase App Distribution 배포 순서로 완료할 것**
+
+## 빌드 전 코드 품질 체크 (필수)
+
+APK 빌드 전에 반드시 아래 품질 체크를 실행하고 **90점 이상**일 때만 빌드를 진행한다.
+
+### 채점 기준
+
+| 항목 | 차감 |
+|------|------|
+| error | -10점/개 |
+| warning | -3점/개 |
+| info (deprecated 등) | 미채점 |
+
+시작 점수 100점, 90점 미만이면 빌드 중단 후 문제 수정.
+
+### 품질 체크 명령
+
+```bash
+flutter analyze 2>&1 | tee /tmp/flutter_quality.txt; true
+ERRORS=$(grep -E "^ *error •" /tmp/flutter_quality.txt | wc -l | tr -d ' ')
+WARNINGS=$(grep -E "^ *warning •" /tmp/flutter_quality.txt | wc -l | tr -d ' ')
+SCORE=$((100 - ERRORS * 10 - WARNINGS * 3))
+[ "$SCORE" -lt 0 ] && SCORE=0
+echo "──────────────────────────────"
+echo " 에러:   ${ERRORS}개"
+echo " 경고:   ${WARNINGS}개"
+echo " 품질:   ${SCORE} / 100점"
+echo "──────────────────────────────"
+if [ "$SCORE" -lt 90 ]; then
+  echo "❌ 품질 기준 미달 (${SCORE}점 < 90점) — 에러/경고 수정 후 재시도"
+  grep "   error •\|   warning •" /tmp/flutter_quality.txt
+  exit 1
+fi
+echo "✅ 품질 기준 통과 (${SCORE}점) — 빌드 진행"
+```
+
+> 에러·경고가 없으면 100점. 경고 3개까지는 91점으로 통과. 4개부터 88점으로 실패.
+
+---
 
 ## Firebase App Distribution 배포
 

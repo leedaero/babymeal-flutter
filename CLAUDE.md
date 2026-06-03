@@ -6,6 +6,15 @@
 - 로컬 경로: `/Users/idaelo/project/babymeal-flutter`
 - 백엔드 레포: `leedaero/babymeal` (`/Users/idaelo/project/babyMeal`)
 
+## API 백엔드 수정이 필요한 경우
+
+Flutter 앱 작업 중 API 추가·수정·버그 수정 등 백엔드 변경이 필요하다면, **이 레포에서 직접 수정하지 말고** 백엔드 프로젝트로 이동해서 수정할 것:
+
+- 백엔드 프로젝트 경로: `/Users/idaelo/project/babyMeal/`
+- GitHub: `leedaero/babymeal`
+
+백엔드 수정이 완료된 후 Flutter 앱 작업을 이어서 진행한다.
+
 ## 작업 완료 후 필수 사항
 
 - 작업이 끝나면 항상 커밋 → 푸시까지 완료할 것

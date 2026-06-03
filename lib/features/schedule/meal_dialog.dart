@@ -212,108 +212,129 @@ class _MealDialogState extends ConsumerState<MealDialog> {
                           fontSize: 11, color: Colors.grey.shade400)),
                 ],
               )
-            : Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Text('선택된 재료',
-                          style: TextStyle(
-                            fontSize: 10, fontWeight: FontWeight.w700,
-                            color: Colors.grey.shade500,
-                          )),
-                      const SizedBox(width: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 7, vertical: 1),
-                        decoration: BoxDecoration(
-                          color: _lightMint,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Text('${_selected.length}종  $_totalCount큐브',
-                            style: const TextStyle(
-                              fontSize: 10, fontWeight: FontWeight.w800,
-                              color: _green,
-                            )),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  async.when(
-                    loading: () => const SizedBox.shrink(),
-                    error: (_, __) => const SizedBox.shrink(),
-                    data: (items) {
-                      final selItems = _sorted(items)
-                          .where((i) => _selected.containsKey(i.id))
-                          .toList();
-                      return SizedBox(
-                        height: 32,
-                        child: ListView(
-                          scrollDirection: Axis.horizontal,
-                          children: selItems.map((ing) {
-                            final cnt = _selected[ing.id]!;
-                            return Padding(
-                              padding: const EdgeInsets.only(right: 6),
-                              child: GestureDetector(
-                                onTap: () => setState(
-                                    () => _selected[ing.id] = cnt + 1),
-                                onLongPress: () =>
-                                    setState(() => _selected.remove(ing.id)),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 10, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    color: _lightMint,
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(
-                                        color: _mint.withOpacity(0.4)),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Text(
-                                        '${ing.emoji} ${ing.name}'
-                                        '${ing.weightPerCube != null ? ' ${ing.weightPerCube}g' : ''}',
-                                          style: const TextStyle(
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.w700,
-                                            color: _green,
-                                          )),
-                                      const SizedBox(width: 4),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 5, vertical: 1),
-                                        decoration: BoxDecoration(
-                                          color: _green,
-                                          borderRadius:
-                                              BorderRadius.circular(8),
-                                        ),
-                                        child: Text('×$cnt',
-                                            style: const TextStyle(
-                                              fontSize: 10,
-                                              fontWeight: FontWeight.w800,
-                                              color: Colors.white,
-                                            )),
-                                      ),
-                                      const SizedBox(width: 3),
-                                      Text('✕',
-                                          style: TextStyle(
-                                            fontSize: 9,
-                                            color: Colors.grey.shade400,
-                                          )),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            );
-                          }).toList(),
-                        ),
-                      );
-                    },
-                  ),
-                ],
+            : async.when(
+                loading: () => _buildSelectionContent(null),
+                error: (_, __) => _buildSelectionContent(null),
+                data: _buildSelectionContent,
               ),
       );
+
+  Widget _buildSelectionContent(List<Ingredient>? items) {
+    final selItems = items != null
+        ? _sorted(items).where((i) => _selected.containsKey(i.id)).toList()
+        : <Ingredient>[];
+    final totalGrams = selItems.fold<int>(
+        0, (sum, ing) => sum + _selected[ing.id]! * (ing.weightPerCube ?? 0));
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text('선택된 재료',
+                style: TextStyle(
+                  fontSize: 10, fontWeight: FontWeight.w700,
+                  color: Colors.grey.shade500,
+                )),
+            const SizedBox(width: 6),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 1),
+              decoration: BoxDecoration(
+                color: _lightMint,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text('${_selected.length}종  $_totalCount큐브',
+                  style: const TextStyle(
+                    fontSize: 10, fontWeight: FontWeight.w800,
+                    color: _green,
+                  )),
+            ),
+            if (totalGrams > 0) ...[
+              const SizedBox(width: 6),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 7, vertical: 1),
+                decoration: BoxDecoration(
+                  color: _green.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text('약 ${totalGrams}g',
+                    style: const TextStyle(
+                      fontSize: 10, fontWeight: FontWeight.w800,
+                      color: _green,
+                    )),
+              ),
+            ],
+          ],
+        ),
+        if (selItems.isNotEmpty) ...[
+          const SizedBox(height: 6),
+          SizedBox(
+            height: 32,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              children: selItems.map((ing) {
+                final cnt = _selected[ing.id]!;
+                return Padding(
+                  padding: const EdgeInsets.only(right: 6),
+                  child: GestureDetector(
+                    onTap: () =>
+                        setState(() => _selected[ing.id] = cnt + 1),
+                    onLongPress: () =>
+                        setState(() => _selected.remove(ing.id)),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: _lightMint,
+                        borderRadius: BorderRadius.circular(20),
+                        border:
+                            Border.all(color: _mint.withOpacity(0.4)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            '${ing.emoji} ${ing.name}'
+                            '${ing.weightPerCube != null ? ' ${ing.weightPerCube}g' : ''}',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: _green,
+                            )),
+                          const SizedBox(width: 4),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 5, vertical: 1),
+                            decoration: BoxDecoration(
+                              color: _green,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text('×$cnt',
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.white,
+                                )),
+                          ),
+                          const SizedBox(width: 3),
+                          Text('✕',
+                              style: TextStyle(
+                                fontSize: 9,
+                                color: Colors.grey.shade400,
+                              )),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
 
   // ── ③ 검색창 ─────────────────────────────────────────
   Widget _buildSearch() => Padding(

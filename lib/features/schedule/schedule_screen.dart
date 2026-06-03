@@ -345,59 +345,10 @@ class _MealCard extends StatelessWidget {
       );
 
   Future<void> _editConsumedGrams(BuildContext context) async {
-    final ctrl = TextEditingController(
-      text: meal.consumedGrams != null ? '${meal.consumedGrams}' : '',
-    );
     final result = await showDialog<String>(
       context: context,
-      builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('실제 섭취량', style: TextStyle(fontWeight: FontWeight.w800)),
-        content: TextField(
-          controller: ctrl,
-          keyboardType: TextInputType.number,
-          autofocus: true,
-          decoration: InputDecoration(
-            hintText: '예) 80',
-            suffixText: 'g',
-            filled: true,
-            fillColor: const Color(0xFFF7FAF8),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: _lightMint),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: _lightMint),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: _mint, width: 2),
-            ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('취소', style: TextStyle(color: Colors.grey)),
-          ),
-          if (meal.consumedGrams != null)
-            TextButton(
-              onPressed: () => Navigator.pop(context, ''),
-              child: const Text('삭제', style: TextStyle(color: Color(0xFFe63946))),
-            ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _green,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            ),
-            onPressed: () => Navigator.pop(context, ctrl.text),
-            child: const Text('저장', style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
+      builder: (_) => _ConsumedGramsDialog(initialValue: meal.consumedGrams),
     );
-    ctrl.dispose();
     if (result == null) return;
     final grams = result.isEmpty ? null : int.tryParse(result);
     try {
@@ -491,4 +442,78 @@ class _StatusBadge extends StatelessWidget {
       child: Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: fg)),
     );
   }
+}
+
+class _ConsumedGramsDialog extends StatefulWidget {
+  final int? initialValue;
+  const _ConsumedGramsDialog({this.initialValue});
+
+  @override
+  State<_ConsumedGramsDialog> createState() => _ConsumedGramsDialogState();
+}
+
+class _ConsumedGramsDialogState extends State<_ConsumedGramsDialog> {
+  late final TextEditingController _ctrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = TextEditingController(
+      text: widget.initialValue != null ? '${widget.initialValue}' : '',
+    );
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('실제 섭취량', style: TextStyle(fontWeight: FontWeight.w800)),
+        content: TextField(
+          controller: _ctrl,
+          keyboardType: TextInputType.number,
+          autofocus: true,
+          decoration: InputDecoration(
+            hintText: '예) 80',
+            suffixText: 'g',
+            filled: true,
+            fillColor: const Color(0xFFF7FAF8),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: _lightMint),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: _lightMint),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: _mint, width: 2),
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('취소', style: TextStyle(color: Colors.grey)),
+          ),
+          if (widget.initialValue != null)
+            TextButton(
+              onPressed: () => Navigator.pop(context, ''),
+              child: const Text('삭제', style: TextStyle(color: Color(0xFFe63946))),
+            ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _green,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            onPressed: () => Navigator.pop(context, _ctrl.text),
+            child: const Text('저장', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      );
 }

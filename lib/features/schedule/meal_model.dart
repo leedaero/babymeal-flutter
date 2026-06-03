@@ -5,17 +5,20 @@ class MealIngredient {
   final int grams;
   final String name;
   final String emoji;
+  final int? weightPerCube;
   const MealIngredient({
     required this.ingredientId,
     required this.grams,
     required this.name,
     required this.emoji,
+    this.weightPerCube,
   });
   factory MealIngredient.fromJson(Map<String, dynamic> j) => MealIngredient(
         ingredientId: j['ingredient_id'],
         grams: j['grams'] ?? 0,
         name: j['name'] ?? '',
         emoji: j['emoji'] ?? '',
+        weightPerCube: j['weight_per_cube'],
       );
 }
 
@@ -26,6 +29,7 @@ class Meal {
   final String status;
   final String note;
   final List<MealIngredient> ingredients;
+  final int? consumedGrams;
 
   const Meal({
     required this.id,
@@ -34,6 +38,7 @@ class Meal {
     required this.status,
     required this.note,
     required this.ingredients,
+    this.consumedGrams,
   });
 
   factory Meal.fromJson(Map<String, dynamic> j) => Meal(
@@ -45,6 +50,7 @@ class Meal {
         ingredients: (j['ingredients'] as List? ?? [])
             .map((i) => MealIngredient.fromJson(i as Map<String, dynamic>))
             .toList(),
+        consumedGrams: j['consumed_grams'],
       );
 
   static const mealTimeKo = {
@@ -65,4 +71,9 @@ class Meal {
 
   String get mealTimeKoStr => mealTimeKo[mealTime] ?? mealTime;
   int get statusColorInt => statusColor[status] ?? 0xFF9E9E9E;
+
+  int get totalPlannedGrams =>
+      ingredients.fold(0, (s, i) => s + i.grams * (i.weightPerCube ?? 0));
+  int get totalCubes =>
+      ingredients.fold(0, (s, i) => s + i.grams);
 }

@@ -36,4 +36,11 @@ class MealActions {
   static Future<void> delete(int id) async {
     await ApiClient.instance.dio.delete('/api/meals/$id');
   }
+
+  static Future<void> updateConsumedGrams(int id, int? grams) async {
+    await ApiClient.instance.dio.patch(
+      '/api/meals/$id',
+      data: {'consumed_grams': grams},
+    );
+  }
 }

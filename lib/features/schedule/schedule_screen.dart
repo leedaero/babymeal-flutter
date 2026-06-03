@@ -242,61 +242,174 @@ class _MealCard extends StatelessWidget {
         ),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          child: Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                decoration: BoxDecoration(
-                  color: _timeBg,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(meal.mealTimeKoStr,
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: _timeColor)),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      meal.ingredients.isNotEmpty
-                          ? meal.ingredients.map((i) => i.name).join(', ')
-                          : '재료 없음',
-                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: _green),
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: _timeBg,
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                    if (meal.ingredients.isNotEmpty) ...[
-                      const SizedBox(height: 2),
-                      Text(
-                        meal.ingredients.map((i) => i.emoji).join(' '),
-                        style: const TextStyle(fontSize: 12),
+                    child: Text(meal.mealTimeKoStr,
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: _timeColor)),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          meal.ingredients.isNotEmpty
+                              ? meal.ingredients.map((i) => i.name).join(', ')
+                              : '재료 없음',
+                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: _green),
+                        ),
+                        if (meal.ingredients.isNotEmpty) ...[
+                          const SizedBox(height: 2),
+                          Text(
+                            meal.ingredients.map((i) => i.emoji).join(' '),
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  _StatusBadge(status: meal.status),
+                  PopupMenuButton<String>(
+                    icon: const Icon(Icons.more_vert, color: Colors.grey, size: 18),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    onSelected: (v) => _onMenu(context, v),
+                    itemBuilder: (_) => [
+                      const PopupMenuItem(value: 'edit', child: Text('수정 ✏️')),
+                      if (meal.status != 'confirmed')
+                        const PopupMenuItem(value: 'confirmed', child: Text('먹었어요 ✅')),
+                      if (meal.status != 'upcoming')
+                        const PopupMenuItem(value: 'upcoming', child: Text('예정으로 변경')),
+                      if (meal.status != 'skipped')
+                        const PopupMenuItem(value: 'skipped', child: Text('건너뜀')),
+                      const PopupMenuItem(
+                        value: 'delete',
+                        child: Text('삭제', style: TextStyle(color: Color(0xFFe63946))),
                       ),
                     ],
-                  ],
-                ),
-              ),
-              _StatusBadge(status: meal.status),
-              PopupMenuButton<String>(
-                icon: const Icon(Icons.more_vert, color: Colors.grey, size: 18),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                onSelected: (v) => _onMenu(context, v),
-                itemBuilder: (_) => [
-                  const PopupMenuItem(value: 'edit', child: Text('수정 ✏️')),
-                  if (meal.status != 'confirmed')
-                    const PopupMenuItem(value: 'confirmed', child: Text('먹었어요 ✅')),
-                  if (meal.status != 'upcoming')
-                    const PopupMenuItem(value: 'upcoming', child: Text('예정으로 변경')),
-                  if (meal.status != 'skipped')
-                    const PopupMenuItem(value: 'skipped', child: Text('건너뜀')),
-                  const PopupMenuItem(
-                    value: 'delete',
-                    child: Text('삭제', style: TextStyle(color: Color(0xFFe63946))),
                   ),
                 ],
               ),
+              if (meal.ingredients.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                _buildGramsRow(context),
+              ],
             ],
           ),
         ),
       );
+
+  Widget _buildGramsRow(BuildContext context) {
+    final planned = meal.totalPlannedGrams;
+    final cubes = meal.totalCubes;
+    final planLabel = planned > 0 ? '계획 ${planned}g' : '${cubes}큐브';
+
+    return Row(
+      children: [
+        _chip(planLabel, _lightMint, _green),
+        const SizedBox(width: 8),
+        GestureDetector(
+          onTap: () => _editConsumedGrams(context),
+          child: meal.consumedGrams != null
+              ? _chip(
+                  '실제 ${meal.consumedGrams}g  ✏️',
+                  const Color(0xFFe8f4fd),
+                  const Color(0xFF457b9d),
+                )
+              : Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.edit_note, size: 14, color: Colors.grey.shade400),
+                    const SizedBox(width: 3),
+                    Text('실제 섭취량 기록',
+                        style: TextStyle(fontSize: 11, color: Colors.grey.shade400)),
+                  ],
+                ),
+        ),
+      ],
+    );
+  }
+
+  Widget _chip(String text, Color bg, Color fg) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(8)),
+        child: Text(text, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: fg)),
+      );
+
+  Future<void> _editConsumedGrams(BuildContext context) async {
+    final ctrl = TextEditingController(
+      text: meal.consumedGrams != null ? '${meal.consumedGrams}' : '',
+    );
+    final result = await showDialog<String>(
+      context: context,
+      builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('실제 섭취량', style: TextStyle(fontWeight: FontWeight.w800)),
+        content: TextField(
+          controller: ctrl,
+          keyboardType: TextInputType.number,
+          autofocus: true,
+          decoration: InputDecoration(
+            hintText: '예) 80',
+            suffixText: 'g',
+            filled: true,
+            fillColor: const Color(0xFFF7FAF8),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: _lightMint),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: _lightMint),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: _mint, width: 2),
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('취소', style: TextStyle(color: Colors.grey)),
+          ),
+          if (meal.consumedGrams != null)
+            TextButton(
+              onPressed: () => Navigator.pop(context, ''),
+              child: const Text('삭제', style: TextStyle(color: Color(0xFFe63946))),
+            ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _green,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            onPressed: () => Navigator.pop(context, ctrl.text),
+            child: const Text('저장', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+    ctrl.dispose();
+    if (result == null) return;
+    final grams = result.isEmpty ? null : int.tryParse(result);
+    try {
+      await MealActions.updateConsumedGrams(meal.id, grams);
+      onRefresh();
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('저장 실패: $e')));
+      }
+    }
+  }
 
   Future<void> _onMenu(BuildContext context, String action) async {
     if (action == 'edit') {

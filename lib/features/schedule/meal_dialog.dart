@@ -61,8 +61,12 @@ class _MealDialogState extends ConsumerState<MealDialog> {
       _mealTime = e.mealTime;
       for (final ing in e.ingredients) {
         final wpc = ing.weightPerCube;
+        // grams >= wpc → 실제 그람 저장값 (웹 방식), 큐브 수로 변환
+        // grams <  wpc → 이미 큐브 수 (모바일 방식), 그대로 사용
         _selected[ing.ingredientId] =
-            (wpc != null && wpc > 0) ? (ing.grams / wpc).round() : ing.grams;
+            (wpc != null && wpc > 0 && ing.grams >= wpc)
+                ? (ing.grams / wpc).round()
+                : ing.grams;
       }
     }
   }

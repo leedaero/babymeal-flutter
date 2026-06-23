@@ -258,16 +258,17 @@ class _IngredientCard extends StatelessWidget {
                             color: expired ? const Color(0xFFe63946) : _green,
                           )),
                       const SizedBox(width: 6),
-                      if (low && !expired)
+                      if (low)
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
                           decoration: BoxDecoration(
                             color: const Color(0xFFFFF3E0),
                             borderRadius: BorderRadius.circular(6),
                           ),
-                          child: const Text('부족',
+                          child: const Text('재고 부족',
                               style: TextStyle(fontSize: 10, color: Colors.orange, fontWeight: FontWeight.w700)),
                         ),
+                      if (low && expired) const SizedBox(width: 4),
                       if (expired)
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
@@ -275,7 +276,7 @@ class _IngredientCard extends StatelessWidget {
                             color: const Color(0xFFffe5e7),
                             borderRadius: BorderRadius.circular(6),
                           ),
-                          child: const Text('만료',
+                          child: const Text('기한 경과',
                               style: TextStyle(fontSize: 10, color: Color(0xFFe63946), fontWeight: FontWeight.w700)),
                         ),
                     ],

@@ -1,6 +1,9 @@
 // lib/core/api/api_client.dart
 import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
 import '../auth/auth_storage.dart';
+import '../nav_key.dart';
+import '../../features/login/login_screen.dart';
 
 class ApiClient {
   static final ApiClient instance = ApiClient._();
@@ -39,6 +42,11 @@ class ApiClient {
           return;
         } catch (_) {}
       }
+      await AuthStorage.clear();
+      navigatorKey.currentState?.pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+        (_) => false,
+      );
     }
     h.next(e);
   }

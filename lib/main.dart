@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'core/push/fcm_service.dart';
+import 'core/nav_key.dart';
 import 'features/splash/splash_screen.dart';
 
 void main() async {
@@ -17,6 +18,7 @@ class BabyMealApp extends StatelessWidget {
   const BabyMealApp({super.key});
   @override
   Widget build(BuildContext context) => MaterialApp(
+        navigatorKey: navigatorKey,
         title: '치밀한 이유식',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(

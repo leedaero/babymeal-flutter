@@ -128,9 +128,10 @@ class _EmojiPickerDialogState extends State<_EmojiPickerDialog> {
   @override
   Widget build(BuildContext context) {
     final results = _results;
+    final listMaxH = (MediaQuery.of(context).size.height * 0.28).clamp(160.0, 260.0);
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-      insetPadding: const EdgeInsets.symmetric(horizontal: 28, vertical: 60),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 28, vertical: 40),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(18, 20, 18, 16),
         child: Column(
@@ -152,7 +153,7 @@ class _EmojiPickerDialogState extends State<_EmojiPickerDialog> {
             const SizedBox(height: 14),
             TextField(
               controller: _searchCtrl,
-              autofocus: true,
+              autofocus: false,
               onChanged: (v) => setState(() => _query = v),
               style: const TextStyle(fontSize: 14),
               decoration: InputDecoration(
@@ -178,7 +179,7 @@ class _EmojiPickerDialogState extends State<_EmojiPickerDialog> {
                 style: const TextStyle(fontSize: 11, color: Colors.grey)),
             const SizedBox(height: 6),
             ConstrainedBox(
-              constraints: const BoxConstraints(maxHeight: 240),
+              constraints: BoxConstraints(maxHeight: listMaxH),
               child: results.isEmpty
                   ? const Padding(
                       padding: EdgeInsets.symmetric(vertical: 16),

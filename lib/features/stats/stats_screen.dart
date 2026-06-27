@@ -347,10 +347,8 @@ class _HBar extends StatelessWidget {
         ? '${ing.emoji} ${ing.name}  ${ing.weightPerCube}g'
         : '${ing.emoji} ${ing.name}';
     final rawColor = _hexToColor(ing.color);
-    final barColor = isLow
-        ? _red
-        : (rawColor.computeLuminance() > 0.85 ? _barBlue : rawColor);
-    final barBg = isLow ? _redLight : const Color(0xFFF0F4F2);
+    final barColor = rawColor.computeLuminance() > 0.85 ? _barBlue : rawColor;
+    final barBg = const Color(0xFFF0F4F2);
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),

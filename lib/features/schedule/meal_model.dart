@@ -6,12 +6,14 @@ class MealIngredient {
   final String name;
   final String emoji;
   final int? weightPerCube;
+  final bool consumed;
   const MealIngredient({
     required this.ingredientId,
     required this.grams,
     required this.name,
     required this.emoji,
     this.weightPerCube,
+    this.consumed = true,
   });
   factory MealIngredient.fromJson(Map<String, dynamic> j) => MealIngredient(
         ingredientId: j['ingredient_id'],
@@ -19,6 +21,7 @@ class MealIngredient {
         name: j['name'] ?? '',
         emoji: j['emoji'] ?? '',
         weightPerCube: j['weight_per_cube'],
+        consumed: (j['consumed'] as int? ?? 1) == 1,
       );
 }
 

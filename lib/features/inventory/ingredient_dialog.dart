@@ -292,7 +292,7 @@ class _IngredientSheetState extends State<IngredientSheet> {
     if (e != null) {
       _nameCtrl.text = e.name;
       _emoji = e.emoji;
-      _totalCtrl.text = e.totalCubes.toString();
+      _totalCtrl.text = e.currentCubes.toString();
       _weightCtrl.text = e.weightPerCube?.toString() ?? '';
       _dateCtrl.text = e.createdAt;
       _category = e.category ?? '기타';

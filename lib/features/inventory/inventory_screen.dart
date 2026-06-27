@@ -381,6 +381,38 @@ class _IngredientCard extends StatelessWidget {
     }
   }
 
+  static String _eventLabel(String type, int delta) {
+    switch (type) {
+      case 'fed':       return '급여';
+      case 'cancelled': return '급여 취소';
+      case 'replenished': return '재고 보충';
+      case 'created':   return '재료 등록';
+      case 'edited':    return '정보 수정';
+      default:
+        return delta > 0 ? '추가' : '차감';
+    }
+  }
+
+  static Color _eventColor(String type, int delta) {
+    if (type == 'cancelled') return Colors.orange;
+    if (type == 'fed') return const Color(0xFFe63946);
+    return delta > 0 ? _green : const Color(0xFFe63946);
+  }
+
+  static Color _eventBg(String type, int delta) {
+    if (type == 'cancelled') return const Color(0xFFFFF3E0);
+    if (type == 'fed') return const Color(0xFFffe5e7);
+    return delta > 0 ? _lightMint : const Color(0xFFffe5e7);
+  }
+
+  static IconData _eventIcon(String type, int delta) {
+    if (type == 'fed') return Icons.restaurant;
+    if (type == 'cancelled') return Icons.cancel_outlined;
+    if (type == 'created' || type == 'replenished') return Icons.add;
+    if (type == 'edited') return Icons.edit_outlined;
+    return delta > 0 ? Icons.add : Icons.remove;
+  }
+
   Future<void> _showLogs(BuildContext context) async {
     try {
       final logs = await IngredientActions.logs(item.id);
@@ -399,29 +431,47 @@ class _IngredientCard extends StatelessWidget {
                   style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: _green)),
             ),
             Expanded(
-              child: ListView.builder(
-                itemCount: logs.length,
-                itemBuilder: (_, i) {
-                  final l = logs[i];
-                  final delta = l['delta'] as int;
-                  return Material(
-                    color: Colors.transparent,
-                    child: ListTile(
-                      leading: Container(
-                        width: 36, height: 36,
-                        decoration: BoxDecoration(
-                          color: delta > 0 ? _lightMint : const Color(0xFFffe5e7),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Icon(delta > 0 ? Icons.add : Icons.remove,
-                            color: delta > 0 ? _green : const Color(0xFFe63946), size: 18),
-                      ),
-                      title: Text('${l['event_type']} ${delta > 0 ? '+' : ''}$delta'),
-                      subtitle: Text(l['logged_at']?.toString().substring(0, 16) ?? ''),
+              child: logs.isEmpty
+                  ? const Center(child: Text('기록이 없어요', style: TextStyle(color: Colors.grey)))
+                  : ListView.builder(
+                      itemCount: logs.length,
+                      itemBuilder: (_, i) {
+                        final l = logs[i];
+                        final delta = l['delta'] as int;
+                        final type = l['event_type'] as String? ?? '';
+                        final note = l['note'] as String? ?? '';
+                        final label = _eventLabel(type, delta);
+                        final color = _eventColor(type, delta);
+                        final bg = _eventBg(type, delta);
+                        final icon = _eventIcon(type, delta);
+                        return Material(
+                          color: Colors.transparent,
+                          child: ListTile(
+                            leading: Container(
+                              width: 36, height: 36,
+                              decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(10)),
+                              child: Icon(icon, color: color, size: 18),
+                            ),
+                            title: Row(
+                              children: [
+                                Text(label, style: TextStyle(fontWeight: FontWeight.w700, color: color)),
+                                if (delta != 0) ...[
+                                  const SizedBox(width: 6),
+                                  Text('${delta > 0 ? '+' : ''}$delta큐브',
+                                      style: TextStyle(fontSize: 13, color: color)),
+                                ],
+                              ],
+                            ),
+                            subtitle: Text(
+                              note.isNotEmpty
+                                  ? '$note  •  ${l['logged_at']?.toString().substring(0, 16) ?? ''}'
+                                  : l['logged_at']?.toString().substring(0, 16) ?? '',
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                          ),
+                        );
+                      },
                     ),
-                  );
-                },
-              ),
             ),
           ],
         ),

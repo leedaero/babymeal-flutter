@@ -42,13 +42,18 @@ class Ingredient {
 
   bool get isLowStock => currentCubes <= 3;
 
-  bool get isExpired {
-    if (createdAt.isEmpty) return false;
+  int? get daysSinceMade {
+    if (createdAt.isEmpty) return null;
     try {
       final made = DateTime.parse(createdAt);
-      return DateTime.now().difference(made).inDays > 14;
+      return DateTime.now().difference(made).inDays;
     } catch (_) {
-      return false;
+      return null;
     }
+  }
+
+  bool get isExpired {
+    final days = daysSinceMade;
+    return days != null && days > 14;
   }
 }

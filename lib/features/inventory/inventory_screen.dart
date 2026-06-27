@@ -211,10 +211,17 @@ class _IngredientCard extends StatelessWidget {
   final VoidCallback onRefresh;
   const _IngredientCard({required this.item, required this.onRefresh});
 
+  Color _dayColor(int days) {
+    if (days >= 28) return const Color(0xFFe63946);
+    if (days >= 14) return Colors.orange;
+    return _green;
+  }
+
   @override
   Widget build(BuildContext context) {
     final low = item.isLowStock;
     final expired = item.isExpired;
+    final days = item.daysSinceMade;
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
@@ -302,6 +309,17 @@ class _IngredientCard extends StatelessWidget {
                           : low ? Colors.orange : _green,
                     )),
                 const Text('큐브', style: TextStyle(fontSize: 11, color: Colors.grey)),
+                if (days != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    'D+$days',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: _dayColor(days),
+                    ),
+                  ),
+                ],
               ],
             ),
             const SizedBox(width: 4),

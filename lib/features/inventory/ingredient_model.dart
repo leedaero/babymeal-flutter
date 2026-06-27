@@ -46,7 +46,7 @@ class Ingredient {
     if (createdAt.isEmpty) return false;
     try {
       final made = DateTime.parse(createdAt);
-      return DateTime.now().difference(made).inDays > 90;
+      return DateTime.now().difference(made).inDays > 14;
     } catch (_) {
       return false;
     }

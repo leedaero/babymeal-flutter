@@ -83,7 +83,9 @@ class StatsScreen extends ConsumerWidget {
           }
           final totalCubes = items.fold(0, (s, i) => s + i.currentCubes);
           final lowCount = items.where((i) => i.isLowStock).length;
-          final expiredItems = items.where((i) => i.isExpired).toList();
+          final expiredCount = items.where((i) => i.isExpired).length;
+          final expiredItems = items.where((i) => i.isExpired).toList()
+            ..sort((a, b) => (b.daysSinceMade ?? 0).compareTo(a.daysSinceMade ?? 0));
           final sorted = [...items]
             ..sort((a, b) => b.currentCubes.compareTo(a.currentCubes));
           final double maxCubes =
@@ -111,6 +113,16 @@ class StatsScreen extends ConsumerWidget {
                     value: '${lowCount}가지',
                     label: '재고 부족 (${_lowThreshold}개 이하)',
                     valueColor: lowCount > 0 ? _red : _green,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  _StatCard(
+                    value: '${expiredCount}가지',
+                    label: '기간 경과 (14일 초과)',
+                    valueColor: expiredCount > 0 ? const Color(0xFFE65100) : _green,
                   ),
                 ],
               ),
@@ -230,7 +242,7 @@ class StatsScreen extends ConsumerWidget {
                           color: const Color(0xFFFFF3E0),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Text('⏰ 기간 지남 (90일 초과)',
+                        child: const Text('⏰ 기간 경과 (14일 초과)',
                             style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w700,
@@ -241,21 +253,29 @@ class StatsScreen extends ConsumerWidget {
                         spacing: 8,
                         runSpacing: 8,
                         children: expiredItems
-                            .map((i) => Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 12, vertical: 6),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFFFF3E0),
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: Text(
-                                    '${i.emoji} ${i.name}  ${i.currentCubes}개',
-                                    style: const TextStyle(
-                                        fontSize: 13,
-                                        color: Color(0xFFE65100),
-                                        fontWeight: FontWeight.w600),
-                                  ),
-                                ))
+                            .map((i) {
+                              final days = i.daysSinceMade;
+                              final dayColor = (days ?? 0) >= 28
+                                  ? _red
+                                  : const Color(0xFFE65100);
+                              return Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: (days ?? 0) >= 28
+                                      ? _redLight
+                                      : const Color(0xFFFFF3E0),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Text(
+                                  '${i.emoji} ${i.name}  ${i.currentCubes}개  D+${days ?? '?'}',
+                                  style: TextStyle(
+                                      fontSize: 13,
+                                      color: dayColor,
+                                      fontWeight: FontWeight.w600),
+                                ),
+                              );
+                            })
                             .toList(),
                       ),
                     ],

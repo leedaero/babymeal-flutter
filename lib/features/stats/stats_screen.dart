@@ -508,16 +508,21 @@ class _MonthlyStatsSection extends StatelessWidget {
       for (final ing in meal.ingredients) {
         final ingMatches = items.where((i) => i.id == ing.ingredientId);
         final ingData = ingMatches.isEmpty ? null : ingMatches.first;
+        final wpc = ing.weightPerCube ?? ingData?.weightPerCube;
+        // 웹은 실제 그람값 저장, 모바일은 큐브 수 저장 — 동일 heuristic 적용
+        final cubeCount = (wpc != null && wpc > 0 && ing.grams >= wpc)
+            ? (ing.grams / wpc).round()
+            : ing.grams;
         final existing = byMonth[month]![ing.ingredientId];
         if (existing == null) {
           byMonth[month]![ing.ingredientId] = _IngStat(
             name: ing.name,
             emoji: ing.emoji,
-            cubes: ing.grams,
-            weightPerCube: ingData?.weightPerCube,
+            cubes: cubeCount,
+            weightPerCube: wpc,
           );
         } else {
-          existing.cubes += ing.grams;
+          existing.cubes += cubeCount;
         }
       }
     }
@@ -632,19 +637,25 @@ class _MonthTile extends StatelessWidget {
                           fontWeight: FontWeight.w600,
                           color: _green)),
                   const Spacer(),
-                  if (s.weightPerCube != null)
+                  if (s.weightPerCube != null) ...[
                     Text('${s.weightPerCube}g × ${s.cubes}개 = ',
                         style: const TextStyle(
                             fontSize: 12, color: Colors.grey)),
-                  Text(
-                    s.weightPerCube != null
-                        ? '${s.totalGrams}g'
-                        : '${s.cubes}큐브',
-                    style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: _green),
-                  ),
+                    Text('${s.totalGrams}g',
+                        style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: _green)),
+                  ] else ...[
+                    Text('${s.cubes}개 = ',
+                        style: const TextStyle(
+                            fontSize: 12, color: Colors.grey)),
+                    Text('${s.cubes}큐브',
+                        style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: _green)),
+                  ],
                 ],
               ),
             )),
